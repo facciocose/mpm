@@ -6,8 +6,6 @@ ALGORITHM = 'AES256'
 FILE = 'file.asc'
 PASSWORD_SIZE = 12 
 
-#puts b.to_yaml
-
 def generate_password(size = PASSWORD_SIZE)
   `pwgen -c -n -s -B #{size} 1`.strip
 end
