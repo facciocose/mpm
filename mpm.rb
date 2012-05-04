@@ -1,17 +1,26 @@
 require 'yaml'
 require 'tempfile'
 
+# config
 ALGORITHM = 'AES256'
-FILE = 'file.txt'
+FILE = 'file.asc'
+PASSWORD_SIZE = 12 
 
 #puts b.to_yaml
 
-def generate_password(size = 8)
-  `pwgen -c -n -s -B #{size} 1`
+def generate_password(size = PASSWORD_SIZE)
+  `pwgen -c -n -s -B #{size} 1`.strip
 end
 
 def open_editor(file)
   system(ENV['EDITOR'] + ' ' + file)
+end
+
+def copy_to_clipboard(string)
+    IO.popen('pbcopy', 'w') do |pbcopy|
+      pbcopy.write string
+      pbcopy.close_write
+    end
 end
 
 def help
@@ -19,6 +28,7 @@ def help
 usage: mpm add <section> <key> <value>
        mpm get <section> <key>
        mpm del <section> [key]
+       mpm password <section> [key]
        mpm list
 EOS
   exit
@@ -73,27 +83,6 @@ def add(section, key, value)
   save_archive(FILE, archive)
 end
 
-def list
-  archive = load_archive(FILE)
-
-  if not archive.empty?
-    puts archive.to_yaml
-  end
-end
-
-def get(section, key)
-  archive = load_archive(FILE)
-  if archive.include?(section) and archive[section].include?(key)
-    IO.popen('pbcopy', 'w') do |pbcopy|
-      pbcopy.write archive[section][key]
-      pbcopy.close_write
-    end
-    puts 'data copied to clipboard'
-  else
-    puts 'not found'
-  end
-end
-
 def del(section, key = nil)
   archive = load_archive(FILE)
 
@@ -119,6 +108,32 @@ def del(section, key = nil)
   end
 end
 
+def get(section, key)
+  archive = load_archive(FILE)
+  if archive.include?(section) and archive[section].include?(key)
+    copy_to_clipboard(archive[section][key])
+    puts 'data copied to clipboard'
+  else
+    puts 'not found'
+  end
+end
+
+def password(section, key='password')
+  key = 'password' if key.nil?
+  temp_pass = generate_password
+  add(section, key, temp_pass)
+  copy_to_clipboard(temp_pass)
+  puts "password generated for section #{section} and copied to clipboard"
+end
+
+def list
+  archive = load_archive(FILE)
+
+  if not archive.empty?
+    puts archive.to_yaml
+  end
+end
+
 def parse_options(opts)
   case opts
   when 'add'
@@ -136,6 +151,12 @@ def parse_options(opts)
   when 'get'
     if ARGV.count == 3
       get(ARGV[1], ARGV[2])
+    else
+      help
+    end
+  when 'password'
+    if ARGV.count >= 2
+      password(ARGV[1], ARGV[2])
     else
       help
     end
