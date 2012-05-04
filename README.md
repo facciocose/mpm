@@ -1,8 +1,17 @@
-mpm
-===
+#MPM
 
-minimal password manager
+**MPM** stands for *minimal password manager*.
 
-Based on a portable encrypted YAML file
+I think that password management should be done with open source software and I don't like KeePass.
 
-requires: pwgen, gpg
+This script is my first step in portable password management. Requires `pwgen` for password generation and `gpg` for file encryption.
+
+You can export an editable `YAML` file with this command:
+
+    mpm list > export.yaml
+
+or the equivalent:
+
+    gpg -o export.yaml file.asc
+
+You can always access your passwords with `gpg`.
